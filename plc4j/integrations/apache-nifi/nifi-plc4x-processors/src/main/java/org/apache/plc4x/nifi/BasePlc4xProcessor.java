@@ -321,7 +321,7 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
         for (String tagName : response.getTagNames()) {
             for (int i = 0; i < response.getNumberOfValues(tagName); i++) {
                 Object value = response.getObject(tagName, i);
-                attributes.put(tagName, String.valueOf(value));
+                attributes.put(tagName + "_" + i, String.valueOf(value));
             }
         }
         session.putAllAttributes(flowFile, attributes);
