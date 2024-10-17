@@ -18,7 +18,7 @@
  */
 package org.apache.plc4x.nifi;
 
-import org.apache.nifi.avro.AvroRecordSetWriter;
+import org.apache.nifi.json.JsonRecordSetWriter;
 import org.apache.nifi.reporting.InitializationException;
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
@@ -38,7 +38,8 @@ public class Plc4xSourceRecordProcessorTest {
     private TestRunner testRunner;
     private static final int NUMBER_OF_CALLS = 5;
 
-    private final AvroRecordSetWriter writerService = new  AvroRecordSetWriter();
+    // private final AvroRecordSetWriter writerService = new  AvroRecordSetWriter();
+    private final JsonRecordSetWriter writerService = new JsonRecordSetWriter();
     
     @BeforeEach
     public void init() throws InitializationException {
@@ -56,6 +57,8 @@ public class Plc4xSourceRecordProcessorTest {
 		testRunner.addControllerService("writer", writerService);
     	testRunner.enableControllerService(writerService);
 		testRunner.setProperty(Plc4xSourceRecordProcessor.PLC_RECORD_WRITER_FACTORY.getName(), "writer");
+
+        Plc4xCommonTest.setLogger(testRunner.getLogger());
     }
 
     public void testAvroRecordWriterProcessor() throws InitializationException {  	

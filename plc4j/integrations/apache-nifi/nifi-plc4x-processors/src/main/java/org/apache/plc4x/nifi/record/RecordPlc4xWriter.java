@@ -58,7 +58,7 @@ public class RecordPlc4xWriter implements Plc4xWriter {
     public long writePlcReadResponse(PlcReadResponse response, OutputStream outputStream, ComponentLog logger, 
                 Plc4xReadResponseRowCallback callback, RecordSchema recordSchema, String timestampFieldName) throws Exception {
         
-                    if (fullRecordSet == null) {
+        if (fullRecordSet == null) {
             fullRecordSet = new Plc4xReadResponseRecordSetWithCallback(response, callback, recordSchema, timestampFieldName);
             writeSchema = recordSetWriterFactory.getSchema(originalAttributes, fullRecordSet.getSchema());
         }

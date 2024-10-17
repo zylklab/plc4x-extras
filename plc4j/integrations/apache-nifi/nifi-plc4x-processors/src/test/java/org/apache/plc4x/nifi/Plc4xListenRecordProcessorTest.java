@@ -53,6 +53,8 @@ public class Plc4xListenRecordProcessorTest {
 		testRunner.addControllerService("writer", writerService);
     	testRunner.enableControllerService(writerService);
 		testRunner.setProperty(Plc4xListenRecordProcessor.PLC_RECORD_WRITER_FACTORY.getName(), "writer");
+
+        Plc4xCommonTest.setLogger(testRunner.getLogger());
     }
 
     public void testAvroRecordWriterProcessor() throws InitializationException {  	

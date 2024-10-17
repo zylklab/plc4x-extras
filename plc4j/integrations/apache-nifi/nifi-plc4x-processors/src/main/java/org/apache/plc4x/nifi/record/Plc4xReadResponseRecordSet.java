@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.avro.Schema;
-import org.apache.nifi.avro.AvroTypeUtil;
 import org.apache.nifi.serialization.record.MapRecord;
 import org.apache.nifi.serialization.record.Record;
 import org.apache.nifi.serialization.record.RecordField;
@@ -36,7 +34,7 @@ import org.apache.nifi.serialization.record.RecordSet;
 import org.apache.plc4x.java.api.messages.PlcReadResponse;
 import org.apache.plc4x.java.api.value.PlcValue;
 import org.apache.plc4x.java.spi.messages.DefaultPlcSubscriptionEvent;
-import org.apache.plc4x.java.spi.messages.utils.ResponseItem;
+import org.apache.plc4x.java.spi.messages.utils.PlcResponseItem;
 import org.apache.plc4x.nifi.util.Plc4xCommon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,8 +73,8 @@ public class Plc4xReadResponseRecordSet implements RecordSet, Closeable {
         rsColumnNames = responseDataStructure.keySet();
                
         if (recordSchema == null) {
-        	Schema avroSchema = Plc4xCommon.createSchema(responseDataStructure, this.timestampFieldName);     	
-        	this.recordSchema.set(AvroTypeUtil.createSchema(avroSchema));
+        	RecordSchema schema = Plc4xCommon.createSchema(responseDataStructure, this.timestampFieldName);     	
+        	this.recordSchema.set(schema);
         } else {
             this.recordSchema.set(recordSchema);
         }
@@ -93,7 +91,7 @@ public class Plc4xReadResponseRecordSet implements RecordSet, Closeable {
         
         Map<String, PlcValue> responseDataStructure = new HashMap<>();
 
-        for (Map.Entry<String, ResponseItem<PlcValue>> entry : subscriptionEvent.getValues().entrySet()) {
+        for (Map.Entry<String, PlcResponseItem<PlcValue>> entry : subscriptionEvent.getValues().entrySet()) {
             responseDataStructure.put(entry.getKey(), entry.getValue().getValue());
         }
 

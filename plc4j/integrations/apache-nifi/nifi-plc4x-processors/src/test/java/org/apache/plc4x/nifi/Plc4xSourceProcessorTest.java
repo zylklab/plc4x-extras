@@ -48,6 +48,7 @@ public class Plc4xSourceProcessorTest {
 
         testRunner.addConnection(Plc4xSourceProcessor.REL_SUCCESS);
         testRunner.addConnection(Plc4xSourceProcessor.REL_FAILURE);
+        Plc4xCommonTest.setLogger(testRunner.getLogger());
     }
 
     public void testProcessor() {

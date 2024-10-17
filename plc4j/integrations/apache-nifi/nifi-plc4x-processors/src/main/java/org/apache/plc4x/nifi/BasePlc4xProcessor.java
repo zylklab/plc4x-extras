@@ -281,7 +281,7 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
             }
         } else {
             if (debugEnabled)
-                logger.debug("Plc-Avro schema and PlcTypes resolution not found in cache and will be added with key: " + addressMap);
+                logger.debug("Schema and PlcTypes resolution not found in cache and will be added with key: " + addressMap);
             for (Map.Entry<String,String> entry: addressMap.entrySet()){
                 builder.addTagAddress(entry.getKey(), entry.getValue());
             }

@@ -23,7 +23,6 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -37,9 +36,11 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.util.Utf8;
+import org.apache.nifi.util.MockComponentLog;
 import org.apache.nifi.util.MockFlowFile;
 
 public class Plc4xCommonTest {
+    public static MockComponentLog logger;
     public static final Map<String, Object> originalMap = new HashMap<>();
     public static final Map<String, String> addressMap = new HashMap<>();
     public static final Map<String, Class<?>> typeMap = new HashMap<>();
@@ -59,7 +60,7 @@ public class Plc4xCommonTest {
             .nullableString("DINT", "4000")
             .nullableString("UDINT", "5000")
             // .nullableString("DWORD", "0")
-            .nullableLong("LINT", 6000L)
+            // .nullableLong("LI.NT", 6000L)
             .nullableString("ULINT", "7000")
             // .nullableString("LWORD", "0")
             .nullableFloat("REAL", 1.23456F)
@@ -81,7 +82,7 @@ public class Plc4xCommonTest {
         originalMap.put("DINT", "4000");
         originalMap.put("UDINT", "5000");
         originalMap.put("DWORD", Long.valueOf("0"));
-        originalMap.put("LINT", 6000L);
+        originalMap.put("LI.NT", 6000L);
         originalMap.put("ULINT", "7000");
         originalMap.put("LWORD", Long.valueOf("0"));
         originalMap.put("REAL", 1.23456F);
@@ -100,7 +101,7 @@ public class Plc4xCommonTest {
         addressMap.put("DINT", "RANDOM/v8:DINT");
         addressMap.put("UDINT", "RANDOM/v9:UDINT");
         addressMap.put("DWORD", "RANDOM/v10:DWORD");
-        addressMap.put("LINT", "RANDOM/v11:LINT");
+        addressMap.put("LI.NT", "RANDOM/v11:LINT");
         addressMap.put("ULINT", "RANDOM/v12:ULINT");
         addressMap.put("LWORD", "RANDOM/v13:LWORD");
         addressMap.put("REAL", "RANDOM/v14:REAL");
@@ -113,13 +114,13 @@ public class Plc4xCommonTest {
         typeMap.put("BYTE", ByteBuffer.class);
         typeMap.put("WORD", Utf8.class);
         typeMap.put("SINT", Integer.class);
-        typeMap.put("USINT", Utf8.class);
+        typeMap.put("USINT", Integer.class);
         typeMap.put("INT", Integer.class);
-        typeMap.put("UINT", Utf8.class);
-        typeMap.put("DINT", Utf8.class);
-        typeMap.put("UDINT", Utf8.class);
+        typeMap.put("UINT", Integer.class);
+        typeMap.put("DINT", Integer.class);
+        typeMap.put("UDINT", Long.class);
         typeMap.put("DWORD", Utf8.class);
-        typeMap.put("LINT", Long.class);
+        typeMap.put("LI.NT", Long.class);
         typeMap.put("ULINT", Utf8.class);
         typeMap.put("LWORD", Utf8.class);
         typeMap.put("REAL", Float.class);
@@ -157,13 +158,20 @@ public class Plc4xCommonTest {
 
                     for (String tag : Plc4xCommonTest.addressMap.keySet()) {
                         if (data.hasField(tag)) {
+
+                            
+                            
                             // Check value after string conversion
-                            if (checkValue)
+                            if (checkValue) {
+                                logger.info("Checking type: {} =? {}", data.get(tag), Plc4xCommonTest.originalMap.get(tag));
                                 assert data.get(tag).toString().equalsIgnoreCase(Plc4xCommonTest.originalMap.get(tag).toString());
+                            }
 
                             // Check type
-                            if (checkType)
+                            if (checkType) {
+                                logger.info("Checking type: {} =? {}", data.get(tag), Plc4xCommonTest.typeMap.get(tag));
                                 assert data.get(tag).getClass().equals(Plc4xCommonTest.typeMap.get(tag));
+                            }
                         }
                     }
                 }
@@ -185,7 +193,7 @@ public class Plc4xCommonTest {
         record.put("DINT", "4000");
         record.put("UDINT", "5000");
         // record.put("DWORD", "0");
-        record.put("LINT", 6000L);
+        record.put("LI.NT", 6000L);
         record.put("ULINT", "7000");
         // record.put("LWORD", "0");
         record.put("REAL", 1.23456F);
@@ -210,5 +218,9 @@ public class Plc4xCommonTest {
         }
 
         return out.toByteArray();
+    }
+
+    public static void setLogger(MockComponentLog logg) {
+        logger = logg;
     }
 }
