@@ -216,7 +216,7 @@ public class Plc4xListenRecordProcessor extends BasePlc4xProcessor {
 		try {
 			session.write(resultSetFF, out -> {
 				try {
-					nrOfRows.set(plc4xWriter.writePlcReadResponse(event, out, getLogger(), null, recordSchema, getTimestampField(context)));
+					nrOfRows.set(plc4xWriter.writePlcReadResponse(event, out, getLogger(), recordSchema, getTimestampField(context)));
 				}  catch (Exception e) {
 					getLogger().error("Exception reading the data from PLC", e);
 					throw (e instanceof ProcessException) ? (ProcessException) e : new ProcessException(e);

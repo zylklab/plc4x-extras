@@ -53,83 +53,28 @@ import org.apache.plc4x.java.spi.values.PlcWORD;
 
 public class Plc4xCommon {
 
+	private Plc4xCommon (){}
+
 	/**
-	 * This method is used to infer output AVRO schema directly from the PlcReadResponse object. 
+	 * This method is used to create a NiFi record schema from the PlcReadResponse object. 
 	 * It is directly used from the RecordPlc4xWriter.writePlcReadResponse() method.
 	 * However, to make sure output schema does not change, it is built from the processor configuration (variable memory addresses).
 	 * At the moment this method does not handle the following Object Types: PlcValueAdapter, PlcIECValue<T>, PlcSimpleValue<T>
 	 * 
 	 * @param responseDataStructure: a map that reflects the structure of the answer given by the PLC when making a Read Request.
-	 * @return AVRO Schema built from responseDataStructure.
+	 * @return RecordSchema built from responseDataStructure.
 	 */
 	public static RecordSchema createSchema(Map<String, ? extends PlcValue> responseDataStructure, String timestampFieldName){
-		//plc and record datatype map
-		// final FieldAssembler<Schema> builder = SchemaBuilder.record("PlcReadResponse").namespace("any.data").fields();	
-		String fieldName = null;
-		
-
 		List<RecordField> recordFields = new ArrayList<>();
 
-		// List<DataType> possibleDataTypes = List.of(RecordFieldType.values()).stream().map(rft -> rft.getDataType()).collect(Collectors.toList());
-		// final ChoiceDataType choiceDataType = new ChoiceDataType(possibleDataTypes);
-
 		for (Map.Entry<String, ? extends PlcValue> entry : responseDataStructure.entrySet()) {
-			fieldName = entry.getKey();
-			PlcValue value = entry.getValue();
-			// BaseTypeBuilder<UnionAccumulator<NullDefault<Schema>>> fieldBuilder = 
-			// 	builder.name(fieldName).type().unionOf().nullType().and();
-			
-			// if (value instanceof PlcList) {
-			// 	if(!value.getList().isEmpty()) {
-			// 		fieldBuilder = fieldBuilder.array().items();
-			// 		value = value.getList().get(0);
-			// 	}
-			// }
-
-
-			
-			DataType dataType = getDataType(value);
-
-			// // PlcTYPEs not in here are casted to avro string type.
-			// UnionAccumulator<NullDefault<Schema>> buildedField = null;
-			// if (value instanceof PlcBOOL) {
-			// 	buildedField = fieldBuilder.booleanType();
-			// 	dataType = DataTypeUtils.inferDataType(value, RecordFieldType.)
-			// }else if (value instanceof PlcBYTE) {
-			// 	buildedField = fieldBuilder.bytesType();
-			// }else if (value instanceof PlcINT) {
-			// 	buildedField = fieldBuilder.intType();				
-			// }else if (value instanceof PlcLINT) {
-			// 	buildedField = fieldBuilder.longType();
-			// }else if (value instanceof PlcLREAL) {
-			// 	buildedField = fieldBuilder.doubleType();
-			// }else if (value instanceof PlcREAL) {
-			// 	buildedField = fieldBuilder.floatType();		
-			// }else if (value instanceof PlcSINT) {
-			// 	buildedField = fieldBuilder.intType();		
-			// }else  {// Default to string:
-			// 	fieldBuilder.stringType().endUnion().nullDefault();
-			// 	continue;// In case of null default continue
-			// }
-			// buildedField.endUnion().noDefault();
-
-
-
-
-			RecordField f = new RecordField(fieldName, dataType);
-
+			RecordField f = new RecordField(entry.getKey(), getDataType(entry.getValue()));
 			recordFields.add(f);
 		}
 
 		recordFields.add(new RecordField(timestampFieldName, RecordFieldType.BIGINT.getDataType()));
 
 		return new SimpleRecordSchema(recordFields);
-		
-		// //add timestamp tag to schema
-		// builder.name(timestampFieldName).type().longType().noDefault();
-		
-		
-		// return builder.endRecord();
 	}
 
 	private static DataType getDataType(final Object valueOriginal) {
@@ -142,7 +87,7 @@ public class Plc4xCommon {
 			return RecordFieldType.SHORT.getDataType();
 		if (value instanceof PlcCHAR && value.isShort())
 			return RecordFieldType.STRING.getDataType();
-		if ((value instanceof PlcSINT || value instanceof PlcUSINT) && value.isShort())
+		if ((value instanceof PlcSINT || value instanceof PlcUSINT) && (value.isShort() || value.isInteger()))
 			return RecordFieldType.SHORT.getDataType();
 
 
@@ -201,7 +146,7 @@ public class Plc4xCommon {
 				return new byte[]{value.getByte()};
 			if (value instanceof PlcCHAR && value.isShort())
 				return value.getString();
-			if ((value instanceof PlcSINT || value instanceof PlcUSINT) && value.isShort())
+			if ((value instanceof PlcSINT || value instanceof PlcUSINT) && (value.isShort() || value.isInteger()))
 				return value.getShort();
 
 

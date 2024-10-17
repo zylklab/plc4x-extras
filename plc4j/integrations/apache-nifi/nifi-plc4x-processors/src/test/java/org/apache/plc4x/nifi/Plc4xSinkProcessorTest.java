@@ -26,7 +26,6 @@ import org.apache.plc4x.nifi.address.AddressesAccessUtils;
 import org.apache.plc4x.nifi.address.FilePropertyAccessStrategy;
 import org.apache.plc4x.nifi.util.Plc4xCommonTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -34,7 +33,7 @@ import org.mockito.Mockito;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class Plc4xSinkProcessorTest {
+public class Plc4xSinkProcessorTest extends Plc4xNifiTest{
 
     private TestRunner testRunner;
     private static final int NUMBER_OF_CALLS = 5;
@@ -64,7 +63,7 @@ public class Plc4xSinkProcessorTest {
         testRunner.assertTransferCount(Plc4xSinkProcessor.REL_SUCCESS, NUMBER_OF_CALLS);
     }
 
-    @Disabled
+    // @Disabled
     @Test
     public void testWithAddressProperties() {
         testRunner.setProperty(AddressesAccessUtils.PLC_ADDRESS_ACCESS_STRATEGY, AddressesAccessUtils.ADDRESS_PROPERTY);
@@ -73,7 +72,7 @@ public class Plc4xSinkProcessorTest {
     }
 
     // Test addressess text property access strategy
-    @Disabled
+    // @Disabled
     @Test
     public void testWithAddressText() throws JsonProcessingException { 
         testRunner.setProperty(AddressesAccessUtils.PLC_ADDRESS_ACCESS_STRATEGY, AddressesAccessUtils.ADDRESS_TEXT);
@@ -82,7 +81,7 @@ public class Plc4xSinkProcessorTest {
     }
 
     // Test addressess file property access strategy
-    @Disabled
+    // @Disabled
     @Test
     public void testWithAddressFile() throws InitializationException {
         testRunner.setProperty(AddressesAccessUtils.ADDRESS_FILE_PROPERTY, "file");
