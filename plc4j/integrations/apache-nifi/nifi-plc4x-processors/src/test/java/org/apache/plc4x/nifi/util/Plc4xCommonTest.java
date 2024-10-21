@@ -196,44 +196,9 @@ public class Plc4xCommonTest {
 
     public static Record getTestRecord() {
         Record record = new MapRecord(schema, originalMap);
-        // GenericRecord record = new GenericData.Record(schema);
-        // record.put("BOOL", true);
-        // // record.put("BYTE", "\u0001");
-        // // record.put("WORD", "4");
-        // record.put("SINT", -5);
-        // record.put("USINT", "6");
-        // record.put("INT", 2000);
-        // record.put("UINT", "3000");
-        // record.put("DINT", "4000");
-        // record.put("UDINT", "5000");
-        // // record.put("DWORD", "0");
-        // record.put("LI.NT", 6000L);
-        // record.put("ULINT", "7000");
-        // // record.put("LWORD", "0");
-        // record.put("REAL", 1.23456F);
-        // record.put("LREAL", 2.34567);
-        // record.put("CHAR", "c");
-        // record.put("WCHAR", "d");
-        // record.put("STRING", "this is a string");
         return record;
     }
 
-    // public static byte[] encodeRecord(GenericRecord record){
-    //     ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-    //     DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
-    //     DataFileWriter<GenericRecord> fileWriter = new DataFileWriter<>(writer);
-
-    //     try {
-    //         fileWriter.create(schema, out);
-    //         fileWriter.append(record);
-    //         fileWriter.close();
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //     }
-
-    //     return out.toByteArray();
-    // }
 
     public static void setLogger(MockComponentLog logg) {
         logger = logg;
