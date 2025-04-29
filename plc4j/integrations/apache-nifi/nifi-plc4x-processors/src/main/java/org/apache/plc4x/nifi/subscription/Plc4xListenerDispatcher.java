@@ -25,6 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.plc4x.java.DefaultPlcDriverManager;
@@ -79,6 +80,10 @@ public class Plc4xListenerDispatcher implements Runnable {
             throw new PlcProtocolException("This connection does not support subscription");
         }
 
+        if (logger.isDebugEnabled()){
+            logger.debug("Creating PLC {} subscription for connection {} with tags {}", subscriptionType, plcConnectionString, StringUtils.join(tags));
+        }
+
         PlcSubscriptionRequest.Builder builder = connection.subscriptionRequestBuilder();
 
         for (Map.Entry<String, String> entry : tags.entrySet()) {
@@ -120,6 +125,9 @@ public class Plc4xListenerDispatcher implements Runnable {
      * Closes all listeners and stops all handler threads.
      */
     public void close() {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Closing listener for ");
+        }
         running = false;
         try {
             connection.close();

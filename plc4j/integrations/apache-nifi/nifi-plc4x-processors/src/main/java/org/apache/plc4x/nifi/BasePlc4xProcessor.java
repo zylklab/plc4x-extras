@@ -45,7 +45,6 @@ import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.serialization.record.RecordSchema;
-import org.apache.plc4x.java.DefaultPlcDriverManager;
 import org.apache.plc4x.java.api.PlcConnection;
 import org.apache.plc4x.java.api.PlcDriver;
 import org.apache.plc4x.java.api.exceptions.PlcConnectionException;
@@ -61,6 +60,7 @@ import org.apache.plc4x.nifi.address.AddressesAccessUtils;
 import org.apache.plc4x.nifi.address.DynamicPropertyAccessStrategy;
 import org.apache.plc4x.nifi.record.Plc4xWriter;
 import org.apache.plc4x.nifi.record.SchemaCache;
+import org.apache.plc4x.nifi.util.NiFi2Compatibility;
 
 public abstract class BasePlc4xProcessor extends AbstractProcessor {
 
@@ -101,7 +101,7 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
 		.description("Maximum number of entries in the cache. Can improve performance when addresses change dynamically.")
 		.defaultValue("1")
 		.required(true)
-        .expressionLanguageSupported(ExpressionLanguageScope.VARIABLE_REGISTRY)
+        .expressionLanguageSupported(NiFi2Compatibility.getEnvironmentScope())
 		.addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
 		.build();
 
@@ -120,7 +120,7 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
         .displayName("Timestamp Field Name")
         .description("Name of the field that will display the timestamp of the operation.")
         .required(true)
-        .expressionLanguageSupported(ExpressionLanguageScope.VARIABLE_REGISTRY)
+        .expressionLanguageSupported(NiFi2Compatibility.getEnvironmentScope())
         .addValidator(new Plc4xTimestampFieldValidator())
         .defaultValue("ts")
         .build();
@@ -315,9 +315,18 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
    protected void evaluateReadResponse(final ProcessSession session, final FlowFile flowFile, final PlcReadResponse response) {
         Map<String, String> attributes = new HashMap<>();
         for (String tagName : response.getTagNames()) {
-            for (int i = 0; i < response.getNumberOfValues(tagName); i++) {
-                Object value = response.getObject(tagName, i);
+            
+            // Write single value tag-response on "tagName" attribute
+            if (response.getNumberOfValues(tagName) == 1) {
+                Object value = response.getObject(tagName, 0);
                 attributes.put(tagName, String.valueOf(value));
+            
+            // Write multi-value tag-response on "tagName_i" attribute
+            } else {
+                for (int i = 0; i < response.getNumberOfValues(tagName); i++) {
+                    Object value = response.getObject(tagName, i);
+                    attributes.put(tagName + "_" + i, String.valueOf(value));
+                }
             }
         }
         session.putAllAttributes(flowFile, attributes);
@@ -334,15 +343,15 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
 	}
 
     protected static class Plc4xConnectionStringValidator implements Validator {
+
         @Override
         public ValidationResult validate(String subject, String input, ValidationContext context) {
-            DefaultPlcDriverManager manager = new DefaultPlcDriverManager();
             
             if (context.isExpressionLanguageSupported(subject) && context.isExpressionLanguagePresent(input)) {
                 return new ValidationResult.Builder().subject(subject).input(input).explanation("Expression Language Present").valid(true).build();
             }
             try {
-                PlcDriver driver =  manager.getDriverForUrl(input);
+                PlcDriver driver =  AddressesAccessUtils.getManager().getDriverForUrl(input);
                 driver.getConnection(input);
             } catch (PlcConnectionException e) {
                 return new ValidationResult.Builder().subject(subject)
