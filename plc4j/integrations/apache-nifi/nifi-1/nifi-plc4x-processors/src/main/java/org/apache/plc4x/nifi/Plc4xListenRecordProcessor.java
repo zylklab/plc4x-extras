@@ -18,6 +18,7 @@
  */
 package org.apache.plc4x.nifi;
 
+import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,7 +42,6 @@ import org.apache.nifi.annotation.documentation.SeeAlso;
 import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.annotation.lifecycle.OnStopped;
-import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.components.ValidationContext;
 import org.apache.nifi.components.ValidationResult;
 import org.apache.nifi.components.Validator;
@@ -138,7 +138,8 @@ public class Plc4xListenRecordProcessor extends BasePlc4xProcessor {
         if (subscriptionType.equals(Plc4xSubscriptionType.CYCLIC)){
 			// Only access the property if the dependency is fullfilled
 			cyclingPollingInterval = context.getProperty(PLC_SUBSCRIPTION_CYCLIC_POLLING_INTERVAL).asLong();
-		}createDispatcher(context, events);
+		}
+		createDispatcher(context, events);
 	}
 
     protected void createDispatcher(final ProcessContext context, final BlockingQueue<PlcSubscriptionEvent> events) {
@@ -169,7 +170,6 @@ public class Plc4xListenRecordProcessor extends BasePlc4xProcessor {
 
     @OnStopped
     public void closeDispatcher() throws ProcessException {
-
 		if (readerThread != null) {
 			readerThread.interrupt();
 			try {
@@ -276,7 +276,7 @@ public class Plc4xListenRecordProcessor extends BasePlc4xProcessor {
 
 	private FlowFile completeResultFlowFile(final ProcessSession session, final AtomicLong nrOfRows, FlowFile resultSetFF,
 			Plc4xWriter plc4xWriter) {
-			
+				
 		long executionTimeElapsed = 0;
 		try {
 			executeTime.stop();
@@ -284,6 +284,7 @@ public class Plc4xListenRecordProcessor extends BasePlc4xProcessor {
 		} catch (IllegalStateException e) {
 			// on first message execute time should not be started
 		}
+		
 		
 		final Map<String, String> attributesToAdd = new HashMap<>();
 		attributesToAdd.put(RESULT_ROW_COUNT, String.valueOf(nrOfRows.get()));

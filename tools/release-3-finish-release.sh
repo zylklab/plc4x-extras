@@ -39,6 +39,11 @@ if [[ $(git -C "$DIRECTORY" status --porcelain) ]]; then
   exit 1
 fi
 
+# The release branch and the release tag belong in the Apache repository, which is not necessarily
+# the remote called "origin" - see "resolve_apache_remote" in "release-common.sh".
+require_apache_remote
+echo "Apache remote:        $APACHE_REMOTE ($APACHE_REMOTE_URL)"
+
 # Everything below writes to the release branch, so make sure that is where we are before
 # anything is changed - running this on "develop" by accident would rewrite its documentation
 # version.
@@ -73,127 +78,127 @@ sed_in_place() {
 #
 # Prints the section of the RELEASE_NOTES belonging to one version, converted to AsciiDoc.
 #   $1 the RELEASE_NOTES file, $2 the version
-release_notes_to_asciidoc() {
-  awk -v ver="$2" '
-    /^=+$/ {
-      if (state == 2) { exit }        # banner of the next version, we are done
-      if (state == 1) { state = 2 }   # closing banner of our own title
-      else { pending = 1 }
-      next
-    }
-    {
-      if (pending) {
-        pending = 0
-        title = $0
-        sub(/^\(Unreleased\) /, "", title)
-        if (title == "Apache PLC4X Extras " ver) { state = 1 }
-        next
-      }
-      if (state == 2) { print }
-    }
-  ' "$1" | awk '
-    # Each bullet ends up on a single line. The RELEASE_NOTES wrap them and indent the
-    # continuations, and neither keeping nor stripping that indentation is safe: a continuation
-    # that happens to start with something like "18446744073709551615." would be read as an
-    # ordered list item by AsciiDoc. Joining the lines avoids the question and renders the same.
-    function flush() { if (buffer != "") { print buffer; buffer = "" } }
-    { lines[NR] = $0 }
-    END {
-      last = NR
-      while (last > 0 && lines[last] ~ /^[ \t]*$/) { last-- }   # trim trailing blank lines
-      buffer = ""
-      for (i = 1; i <= last; i++) {
-        l = lines[i]
-        # "New Features" underlined with dashes becomes a level 4 heading
-        if (l ~ /^[A-Za-z]/ && lines[i+1] ~ /^-+$/) { flush(); print "==== " l; i++; started = 1; continue }
-        if (l ~ /^[ \t]*$/) { if (!started) { continue }   # skip the blank lines before the first heading
-                               flush(); print ""; continue }
-        started = 1
-        sub(/^[ \t]+/, "", l)
-        if (l ~ /^[-*] /) {                       # a new bullet
-          flush()
-          sub(/^- PLC4X-[0-9]+ /, "- ", l)        # older notes carried the issue id in front
-          buffer = l
-        } else if (buffer != "") {                # a wrapped continuation of the current bullet
-          buffer = buffer " " l
-        } else {                                  # ordinary prose
-          print l
-        }
-      }
-      flush()
-    }
-  '
-}
+# release_notes_to_asciidoc() {
+#   awk -v ver="$2" '
+#     /^=+$/ {
+#       if (state == 2) { exit }        # banner of the next version, we are done
+#       if (state == 1) { state = 2 }   # closing banner of our own title
+#       else { pending = 1 }
+#       next
+#     }
+#     {
+#       if (pending) {
+#         pending = 0
+#         title = $0
+#         sub(/^\(Unreleased\) /, "", title)
+#         if (title == "Apache PLC4X Extras " ver) { state = 1 }
+#         next
+#       }
+#       if (state == 2) { print }
+#     }
+#   ' "$1" | awk '
+#     # Each bullet ends up on a single line. The RELEASE_NOTES wrap them and indent the
+#     # continuations, and neither keeping nor stripping that indentation is safe: a continuation
+#     # that happens to start with something like "18446744073709551615." would be read as an
+#     # ordered list item by AsciiDoc. Joining the lines avoids the question and renders the same.
+#     function flush() { if (buffer != "") { print buffer; buffer = "" } }
+#     { lines[NR] = $0 }
+#     END {
+#       last = NR
+#       while (last > 0 && lines[last] ~ /^[ \t]*$/) { last-- }   # trim trailing blank lines
+#       buffer = ""
+#       for (i = 1; i <= last; i++) {
+#         l = lines[i]
+#         # "New Features" underlined with dashes becomes a level 4 heading
+#         if (l ~ /^[A-Za-z]/ && lines[i+1] ~ /^-+$/) { flush(); print "==== " l; i++; started = 1; continue }
+#         if (l ~ /^[ \t]*$/) { if (!started) { continue }   # skip the blank lines before the first heading
+#                                flush(); print ""; continue }
+#         started = 1
+#         sub(/^[ \t]+/, "", l)
+#         if (l ~ /^[-*] /) {                       # a new bullet
+#           flush()
+#           sub(/^- PLC4X-[0-9]+ /, "- ", l)        # older notes carried the issue id in front
+#           buffer = l
+#         } else if (buffer != "") {                # a wrapped continuation of the current bullet
+#           buffer = buffer " " l
+#         } else {                                  # ordinary prose
+#           print l
+#         }
+#       }
+#       flush()
+#     }
+#   '
+# }
 
 # Adds a release to a download page: the entry that was current is moved down to "Previous
 # Releases" with its source-release link pointed at the archive, and the new one takes its place.
 #   $1 the download.adoc to edit, $2 the version, $3 the RELEASE_NOTES to take the notes from
-update_download_page() {
-  local page="$1" version="$2" notes="$3"
-  local anchor="release-${version//./_}"
+# update_download_page() {
+#   local page="$1" version="$2" notes="$3"
+#   local anchor="release-${version//./_}"
 
-  if [[ ! -f "$page" ]]; then
-      echo "❌ Download page '$page' not found, aborting."
-      exit 1
-  fi
-  if grep -q "^\[#$anchor\]$" "$page"; then
-      echo "✅ $version is already listed on '$page'."
-      return 0
-  fi
+#   if [[ ! -f "$page" ]]; then
+#       echo "❌ Download page '$page' not found, aborting."
+#       exit 1
+#   fi
+#   if grep -q "^\[#$anchor\]$" "$page"; then
+#       echo "✅ $version is already listed on '$page'."
+#       return 0
+#   fi
 
-  local current_line previous_line
-  current_line=$(grep -n '^== Current Releases$' "$page" | head -1 | cut -d: -f1)
-  previous_line=$(grep -n '^== Previous Releases$' "$page" | head -1 | cut -d: -f1)
-  if [[ -z "$current_line" || -z "$previous_line" || "$previous_line" -le "$current_line" ]]; then
-      echo "❌ '$page' has no usable 'Current Releases'/'Previous Releases' structure, aborting."
-      exit 1
-  fi
+#   local current_line previous_line
+#   current_line=$(grep -n '^== Current Releases$' "$page" | head -1 | cut -d: -f1)
+#   previous_line=$(grep -n '^== Previous Releases$' "$page" | head -1 | cut -d: -f1)
+#   if [[ -z "$current_line" || -z "$previous_line" || "$previous_line" -le "$current_line" ]]; then
+#       echo "❌ '$page' has no usable 'Current Releases'/'Previous Releases' structure, aborting."
+#       exit 1
+#   fi
 
-  # This function always makes $version the current release and pushes what was there into
-  # "Previous Releases". That is only right when $version really is the newest release: a bugfix
-  # off an old branch (0.13.2 while 1.0.0 is current) would otherwise archive 1.0.0. Where that
-  # happens the page needs a human decision about how to present two maintained lines.
-  local current_version
-  current_version=$(sed -n "$((current_line + 1)),$((previous_line - 1))p" "$page" \
-      | grep -oE '^\[#release-[0-9_]+\]$' | head -1 | sed -E 's|^\[#release-||; s|\]$||; s|_|.|g')
-  if [[ -n "$current_version" && "$current_version" != "$version" ]] \
-          && [[ "$(printf '%s\n%s\n' "$version" "$current_version" | sort -V | tail -1)" != "$version" ]]; then
-      echo "❌ '$page' lists $current_version as the current release, which is newer than $version, aborting."
-      echo "   This looks like a bugfix release off an older branch. Add the entry by hand so that"
-      echo "   $current_version stays the current release."
-      exit 1
-  fi
+#   # This function always makes $version the current release and pushes what was there into
+#   # "Previous Releases". That is only right when $version really is the newest release: a bugfix
+#   # off an old branch (0.13.2 while 1.0.0 is current) would otherwise archive 1.0.0. Where that
+#   # happens the page needs a human decision about how to present two maintained lines.
+#   local current_version
+#   current_version=$(sed -n "$((current_line + 1)),$((previous_line - 1))p" "$page" \
+#       | grep -oE '^\[#release-[0-9_]+\]$' | head -1 | sed -E 's|^\[#release-||; s|\]$||; s|_|.|g')
+#   if [[ -n "$current_version" && "$current_version" != "$version" ]] \
+#           && [[ "$(printf '%s\n%s\n' "$version" "$current_version" | sort -V | tail -1)" != "$version" ]]; then
+#       echo "❌ '$page' lists $current_version as the current release, which is newer than $version, aborting."
+#       echo "   This looks like a bugfix release off an older branch. Add the entry by hand so that"
+#       echo "   $current_version stays the current release."
+#       exit 1
+#   fi
 
-  local notes_body
-  notes_body=$(release_notes_to_asciidoc "$notes" "$version")
-  if [[ -z "$notes_body" ]]; then
-      echo "❌ Found no RELEASE_NOTES section for $version in '$notes', aborting."
-      exit 1
-  fi
+#   local notes_body
+#   notes_body=$(release_notes_to_asciidoc "$notes" "$version")
+#   if [[ -z "$notes_body" ]]; then
+#       echo "❌ Found no RELEASE_NOTES section for $version in '$notes', aborting."
+#       exit 1
+#   fi
 
-  {
-    head -n "$current_line" "$page"
-    echo
-    echo "[#$anchor]"
-    echo "=== $version Official https://www.apache.org/dyn/closer.lua/plc4x/plc4x-extras/$version/apache-plc4x-extras-$version-source-release.zip[source release] [ https://downloads.apache.org/plc4x-extras/$version/apache-plc4x-extras-$version-source-release.zip.sha512[SHA512] ] [ https://downloads.apache.org/plc4x/plc4x-extras/$version/apache-plc4x-extras-$version-source-release.zip.asc[ASC] ]"
-    echo
-    echo "$notes_body"
-    echo
-    echo "== Previous Releases"
-    # What used to be current, with its source-release link moved to the archive.
-    sed -n "$((current_line + 1)),$((previous_line - 1))p" "$page" \
-        | sed 's|https://www\.apache\.org/dyn/closer\.lua/plc4x/plc4x-extras/|https://archive.apache.org/dist/plc4x/plc4x-extras/|g'
-    tail -n +"$((previous_line + 1))" "$page"
-  } > "$page.tmp"
+#   {
+#     head -n "$current_line" "$page"
+#     echo
+#     echo "[#$anchor]"
+#     echo "=== $version Official https://www.apache.org/dyn/closer.lua/plc4x/plc4x-extras/$version/apache-plc4x-extras-$version-source-release.zip[source release] [ https://downloads.apache.org/plc4x/plc4x-extras/$version/apache-plc4x-extras-$version-source-release.zip.sha512[SHA512] ] [ https://downloads.apache.org/plc4x/plc4x-extras/$version/apache-plc4x-extras-$version-source-release.zip.asc[ASC] ]"
+#     echo
+#     echo "$notes_body"
+#     echo
+#     echo "== Previous Releases"
+#     # What used to be current, with its source-release link moved to the archive.
+#     sed -n "$((current_line + 1)),$((previous_line - 1))p" "$page" \
+#         | sed 's|https://www\.apache\.org/dyn/closer\.lua/plc4x/plc4x-extras/|https://archive.apache.org/dist/plc4x/plc4x-extras/|g'
+#     tail -n +"$((previous_line + 1))" "$page"
+#   } > "$page.tmp"
 
-  if ! grep -q "^\[#$anchor\]$" "$page.tmp"; then
-      echo "❌ Could not add $version to '$page', aborting."
-      rm -f "$page.tmp"
-      exit 1
-  fi
-  mv "$page.tmp" "$page"
-  echo "✅ $version added to '$page'."
-}
+#   if ! grep -q "^\[#$anchor\]$" "$page.tmp"; then
+#       echo "❌ Could not add $version to '$page', aborting."
+#       rm -f "$page.tmp"
+#       exit 1
+#   fi
+#   mv "$page.tmp" "$page"
+#   echo "✅ $version added to '$page'."
+# }
 
 # ########################################################################################################################
 # # 1. Publish the documentation of this branch as the current release (local)
@@ -353,7 +358,7 @@ update_download_page() {
 # # throw-away worktree and pushed straight to "develop" - the release branch stays checked out in
 # # the working copy the release manager is using.
 
-# if ! git -C "$DIRECTORY" fetch origin develop; then
+# if ! git -C "$DIRECTORY" fetch "$APACHE_REMOTE" develop; then
 #     echo "❌ Got non-0 exit code from fetching 'develop', aborting."
 #     exit 1
 # fi
@@ -369,7 +374,7 @@ update_download_page() {
 
 # # A detached worktree, so this works even if "develop" happens to be checked out somewhere else.
 # rmdir "$DEVELOP_WORKTREE"
-# if ! git -C "$DIRECTORY" worktree add --detach "$DEVELOP_WORKTREE" origin/develop; then
+# if ! git -C "$DIRECTORY" worktree add --detach "$DEVELOP_WORKTREE" "$APACHE_REMOTE/develop"; then
 #     echo "❌ Got non-0 exit code from creating a worktree for 'develop', aborting."
 #     exit 1
 # fi
@@ -490,7 +495,7 @@ update_download_page() {
 #         echo "❌ Got non-0 exit code from committing the changed files, aborting."
 #         exit 1
 #     files
-#     if ! git -C "$DEVELOP_WORKTREE" push origin HEAD:develop; then
+#     if ! git -C "$DEVELOP_WORKTREE" push "$APACHE_REMOTE" HEAD:develop; then
 #         echo "❌ Got non-0 exit code from pushing to 'develop', aborting."
 #         echo "   Someone probably pushed to 'develop' in the meantime - re-run this script."
 #         exit 1
@@ -734,14 +739,14 @@ fi
 # The check is a recommendation, not a veto - the question is always asked, because "which line is
 # the current one" is a decision for the release manager, not for a "sort -V".
 
-if ! git -C "$DIRECTORY" fetch origin release; then
+if ! git -C "$DIRECTORY" fetch "$APACHE_REMOTE" release; then
     echo "⚠️  Could not fetch the 'release' branch, skipping it."
     echo "   Merge '$RELEASE_TAG' into it by hand if it should carry $RELEASED_VERSION."
-elif git -C "$DIRECTORY" merge-base --is-ancestor "$RELEASE_TAG" origin/release; then
+elif git -C "$DIRECTORY" merge-base --is-ancestor "$RELEASE_TAG" "$APACHE_REMOTE/release"; then
     echo "✅ The 'release' branch already contains $RELEASE_TAG."
 else
     # What the branch carries now, so the prompt can say what would be replaced.
-    RELEASE_BRANCH_TAG=$(git -C "$DIRECTORY" describe --tags --abbrev=0 --match "v*" origin/release 2>/dev/null)
+    RELEASE_BRANCH_TAG=$(git -C "$DIRECTORY" describe --tags --abbrev=0 --match "v*" "$APACHE_REMOTE/release" 2>/dev/null)
     RELEASE_BRANCH_VERSION=${RELEASE_BRANCH_TAG#v}
 
     echo
@@ -773,7 +778,7 @@ else
         }
         trap cleanup_release_worktree EXIT
         rmdir "$RELEASE_WORKTREE"
-        if ! git -C "$DIRECTORY" worktree add --detach "$RELEASE_WORKTREE" origin/release; then
+        if ! git -C "$DIRECTORY" worktree add --detach "$RELEASE_WORKTREE" "$APACHE_REMOTE/release"; then
             echo "❌ Got non-0 exit code from creating a worktree for 'release', aborting."
             exit 1
         fi
@@ -799,7 +804,7 @@ else
 
         # The merge has "release" as its first parent, so this fast-forwards - no force needed,
         # which also means the ".asf.yaml" protection on the branch is never in the way.
-        if ! git -C "$RELEASE_WORKTREE" push origin HEAD:release; then
+        if ! git -C "$RELEASE_WORKTREE" push "$APACHE_REMOTE" HEAD:release; then
             echo "❌ Got non-0 exit code from pushing the 'release' branch, aborting."
             exit 1
         fi
@@ -828,7 +833,7 @@ if svn ls "$DIST_RELEASE/$RELEASED_VERSION/" > /dev/null 2>&1 \
     svn ls -R "$DIST_DEV/$RELEASED_VERSION/" | sed 's|^|  |'
     read -r -p "Remove them? (yes/no) " yn
     if [[ "$yn" == "yes" ]]; then
-        if ! svn rm -m "Removed the staged release candidates of PLC4X $RELEASED_VERSION" \
+        if ! svn rm -m "Removed the staged release candidates of PLC4X Extras $RELEASED_VERSION" \
                 "$DIST_DEV/$RELEASED_VERSION"; then
             echo "❌ Got non-0 exit code from removing the staged release candidates, aborting."
             exit 1
@@ -871,7 +876,7 @@ else
     echo
     echo "These older releases are still being served by the mirrors:"
     echo "$OLD_RELEASES" | sed 's|^|  |'
-    echo "They stay available from https://archive.apache.org/dist/plc4x/ after removal."
+    echo "They stay available from https://archive.apache.org/dist/plc4x/plc4x-extras/ after removal."
     read -r -p "Remove them? (yes/no) " yn
     if [[ "$yn" == "yes" ]]; then
         # shellcheck disable=SC2046

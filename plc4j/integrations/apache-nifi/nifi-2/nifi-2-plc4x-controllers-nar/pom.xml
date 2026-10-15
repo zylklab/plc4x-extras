@@ -22,7 +22,7 @@
 	<parent>
 		<groupId>org.apache.plc4x.extras</groupId>
 		<artifactId>plc4j-apache-nifi-2</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>1.1.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>plc4j-nifi-2-plc4x-controllers-nar</artifactId>
@@ -39,13 +39,13 @@
 		<dependency>
 			<groupId>org.apache.plc4x.extras</groupId>
 			<artifactId>nifi-2-plc4x-services-api-nar</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.1.0-SNAPSHOT</version>
 			<type>nar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.plc4x.extras</groupId>
 			<artifactId>plc4j-nifi-2-plc4x-controllers</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.1.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
