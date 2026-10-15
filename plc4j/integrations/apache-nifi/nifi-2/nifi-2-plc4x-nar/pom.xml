@@ -19,6 +19,7 @@
   -->
 <project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
 
+
 	<parent>
 		<groupId>org.apache.plc4x.extras</groupId>
 		<artifactId>plc4j-apache-nifi-2</artifactId>
@@ -33,9 +34,9 @@
 	<dependencies>
 
 		<dependency>
-			<groupId>org.apache.nifi</groupId>
-			<artifactId>nifi-standard-services-api-nar</artifactId>
-			<version>${nifi.version}</version>
+			<groupId>org.apache.plc4x.extras</groupId>
+			<artifactId>nifi-2-plc4x-services-api-nar</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
 			<type>nar</type>
 		</dependency>
 
@@ -73,6 +74,10 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>buildnumber-maven-plugin</artifactId>
+				<configuration>
+					<!-- Without this, the build will fail when building from a source bundle -->
+					<revisionOnScmFailure>unknown</revisionOnScmFailure>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

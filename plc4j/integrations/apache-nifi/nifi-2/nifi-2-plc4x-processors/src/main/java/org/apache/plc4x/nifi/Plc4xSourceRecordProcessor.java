@@ -123,6 +123,7 @@ public class Plc4xSourceRecordProcessor extends BasePlc4xProcessor {
 		Plc4xWriter plc4xWriter = new RecordPlc4xWriter(context.getProperty(PLC_RECORD_WRITER_FACTORY).asControllerService(RecordSetWriterFactory.class), 
 			fileToProcess == null ? Collections.emptyMap() : fileToProcess.getAttributes());
 
+		final FlowFile contextFlowFile = fileToProcess;
 
 		try {
 			session.write(resultSetFF, out -> {
@@ -138,7 +139,7 @@ public class Plc4xSourceRecordProcessor extends BasePlc4xProcessor {
 					logger.debug("Get connection for plc: {}", connectionString);
 				}
 
-				try (PlcConnection connection = getConnectionCache().getConnection(connectionString)) {
+				try (PlcConnection connection = getConnectionCache().getConnection(connectionString, getAuthentication(contextFlowFile))) {
 					
 					readRequest =  getReadRequest(logger, addressMap, tags, connection);
 					

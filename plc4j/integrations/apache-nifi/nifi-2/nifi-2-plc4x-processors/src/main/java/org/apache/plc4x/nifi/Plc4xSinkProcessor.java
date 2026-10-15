@@ -69,7 +69,7 @@ public class Plc4xSinkProcessor extends BasePlc4xProcessor {
 
         final ComponentLog logger = getLogger();
 
-        try(PlcConnection connection = getConnectionCache().getConnection(getConnectionString(context, flowFile))) {
+        try(PlcConnection connection = getConnectionCache().getConnection(getConnectionString(context, flowFile), getAuthentication(flowFile))) {
             if (!connection.getMetadata().isWriteSupported()) {
                 throw new ProcessException("Writing not supported by connection");
             }

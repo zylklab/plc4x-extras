@@ -30,6 +30,7 @@ import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.plc4x.java.DefaultPlcDriverManager;
 import org.apache.plc4x.java.api.PlcConnection;
 import org.apache.plc4x.java.api.PlcConnectionFactory;
+import org.apache.plc4x.java.api.authentication.PlcAuthentication;
 import org.apache.plc4x.java.api.exceptions.PlcConnectionException;
 import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
 import org.apache.plc4x.java.api.messages.PlcSubscriptionEvent;
@@ -72,8 +73,8 @@ public class Plc4xListenerDispatcher implements Runnable {
      * @throws Exception exception
      * @throws PlcConnectionException connection exception
      */
-    public void open(String plcConnectionString, Map<String, String> tags) throws PlcConnectionException, Exception {
-        connection = connectionFactory.getConnection(plcConnectionString);
+    public void open(String plcConnectionString, PlcAuthentication authentication, Map<String, String> tags) throws PlcConnectionException, Exception {
+        connection = connectionFactory.getConnection(plcConnectionString, authentication);
 
         if (!connection.getMetadata().isSubscribeSupported()) {
             throw new PlcProtocolException("This connection does not support subscription");
@@ -134,6 +135,10 @@ public class Plc4xListenerDispatcher implements Runnable {
         if (logger.isDebugEnabled()) {
             logger.debug("Closing listener for ");
         }
+
+        queuedEvents.clear();
+        events.clear();
+
         running = false;
         try {
             connection.close();

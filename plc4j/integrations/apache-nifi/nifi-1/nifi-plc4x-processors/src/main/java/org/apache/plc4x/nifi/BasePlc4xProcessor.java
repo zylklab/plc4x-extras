@@ -48,6 +48,7 @@ import org.apache.nifi.serialization.record.RecordSchema;
 import org.apache.plc4x.java.DefaultPlcDriverManager;
 import org.apache.plc4x.java.api.PlcConnection;
 import org.apache.plc4x.java.api.PlcDriver;
+import org.apache.plc4x.java.api.authentication.PlcAuthentication;
 import org.apache.plc4x.java.api.messages.PlcReadRequest;
 import org.apache.plc4x.java.api.messages.PlcReadResponse;
 import org.apache.plc4x.java.api.messages.PlcWriteRequest;
@@ -60,6 +61,7 @@ import org.apache.plc4x.nifi.address.AddressesAccessUtils;
 import org.apache.plc4x.nifi.address.DynamicPropertyAccessStrategy;
 import org.apache.plc4x.nifi.record.Plc4xWriter;
 import org.apache.plc4x.nifi.record.SchemaCache;
+import org.apache.plc4x.nifi.service.authentication.api.Plc4xAuthenticationControllerService;
 
 public abstract class BasePlc4xProcessor extends AbstractProcessor {
 
@@ -70,8 +72,10 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
 
     protected final SchemaCache schemaCache = new SchemaCache(0);
     protected AddressesAccessStrategy addressAccessStrategy;
+    protected Plc4xAuthenticationControllerService authenticationService;
 
     private PlcConnectionCache connectionCache;
+
 
     protected PlcConnectionCache getConnectionCache() {
         return connectionCache;
@@ -93,6 +97,14 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
         .required(true)
         .expressionLanguageSupported(ExpressionLanguageScope.FLOWFILE_ATTRIBUTES)
         .addValidator(new Plc4xConnectionStringValidator())
+        .build();
+
+    public static final PropertyDescriptor PLC_CONNECTION_ATHENTICATION = new PropertyDescriptor.Builder()
+        .name("plc4x-connection-authentication")
+        .displayName("PLC connection Authentication Service")
+        .description("PLC4X connection authentication service to connect to a given PLC device.")
+        .required(false)
+        .identifiesControllerService(Plc4xAuthenticationControllerService.class)
         .build();
 	
     public static final PropertyDescriptor PLC_SCHEMA_CACHE_SIZE = new PropertyDescriptor.Builder()
@@ -142,6 +154,7 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
     	final List<PropertyDescriptor> properties = new ArrayList<>();
 
     	properties.add(PLC_CONNECTION_STRING);
+        properties.add(PLC_CONNECTION_ATHENTICATION);
         properties.add(AddressesAccessUtils.PLC_ADDRESS_ACCESS_STRATEGY);
         properties.add(AddressesAccessUtils.ADDRESS_TEXT_PROPERTY);
         properties.add(AddressesAccessUtils.ADDRESS_FILE_PROPERTY);
@@ -163,6 +176,13 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
     
     public String getConnectionString(ProcessContext context, FlowFile flowFile) {
         return context.getProperty(PLC_CONNECTION_STRING).evaluateAttributeExpressions(flowFile).getValue();
+    }
+
+    public PlcAuthentication getAuthentication(FlowFile flowFile) {
+        if (authenticationService != null) {
+            return authenticationService.getAuthentication(flowFile);
+        }
+        return null;
     }
 
     public Long getTimeout(ProcessContext context, FlowFile flowFile) {
@@ -210,6 +230,8 @@ public abstract class BasePlc4xProcessor extends AbstractProcessor {
         refreshConnectionCache();
         debugEnabled = getLogger().isDebugEnabled();
         addressAccessStrategy = AddressesAccessUtils.getAccessStrategy(context);
+
+        authenticationService = context.getProperty(PLC_CONNECTION_ATHENTICATION).asControllerService(Plc4xAuthenticationControllerService.class);
     }
 
     @Override

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+
+	<parent>
+		<groupId>org.apache.plc4x.extras</groupId>
+		<artifactId>plc4j-apache-nifi-2</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>plc4j-nifi-2-plc4x-controllers-nar</artifactId>
+	<packaging>nar</packaging>
+
+	<name>PLC4J: Integrations: Apache Nifi 2: Controller Service NAR</name>
+
+	<properties>
+		<maven.javadoc.skip>true</maven.javadoc.skip>
+		<source.skip>true</source.skip>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.plc4x.extras</groupId>
+			<artifactId>nifi-2-plc4x-services-api-nar</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<type>nar</type>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.plc4x.extras</groupId>
+			<artifactId>plc4j-nifi-2-plc4x-controllers</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<!-- Add the ability to create nar packages -->
+			<plugin>
+				<groupId>org.apache.nifi</groupId>
+				<artifactId>nifi-nar-maven-plugin</artifactId>
+			</plugin>
+			<!-- Makes buildRevision and buildBranch available to the NAR Plugin, so they can be populated in the MANIFEST -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>buildnumber-maven-plugin</artifactId>
+				<configuration>
+					<!-- Without this, the build will fail when building from a source bundle -->
+					<revisionOnScmFailure>unknown</revisionOnScmFailure>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
